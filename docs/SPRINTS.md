@@ -35,7 +35,7 @@ while (!isTerminal(state)) {
 
 ## Sprint 0 — Foundation
 
-**Status: backend nearly done.** Build, typecheck, tests, and lint pass.
+**Status: Done.** Backend typecheck, build, tests, lint, and the Angular build pass. The "Later, when a test needs it" item is deferred to Sprints 2–3.
 
 **Done**
 
@@ -47,9 +47,9 @@ while (!isTerminal(state)) {
 **Remaining**
 
 - [x] Remove `reply` from `FinishDecision`; the reply is built by code from verified places. (Required before Sprint 1.)
-- [ ] Angular project (standalone, SCSS) builds.
+- [x] Angular project (standalone, SCSS) builds.
 - [ ] Later, when a test needs it: remove `trace` from state (Sprint 2), DI tokens for ports (Sprint 2), `previousSlots` on the session (Sprint 3).
-- [ ] Cleanup: README boilerplate, `deploy` script, `@nestjs/mau`, committed `tsbuildinfo`.
+- [x] Cleanup: README boilerplate, `deploy` script, `@nestjs/mau`, committed `tsbuildinfo`.
 
 **Exit:** a type test (`// @ts-expect-error`) proves the model cannot express `CALL_TOOL filter_and_verify` or a `FINISH` with restaurant text, and all backend checks plus the frontend build pass.
 
