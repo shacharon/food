@@ -1,6 +1,8 @@
 export * from './agent-decision.js';
 export * from './agent-state.js';
+export * from './circle.js';
 export * from './coordinates.js';
+export * from './place-type.js';
 export * from './errors.js';
 export * from './limits.js';
 export * from './responses.js';
@@ -17,3 +19,4 @@ export * from './tools/result-verifier.js';
 export * from './ports/trace-recorder.js';
 export * from './ports/google-places-client.js';
 export * from './ports/llm-client.js';
+export * from './ports/slot-extractor.js';

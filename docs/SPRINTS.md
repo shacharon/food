@@ -35,7 +35,7 @@ while (!isTerminal(state)) {
 
 ## Sprint 0 — Foundation
 
-**Status: Done.** Backend typecheck, build, tests, lint, and the Angular build pass. The "Later, when a test needs it" item is deferred to Sprints 2–3.
+**Status: Done.** Backend typecheck, build, tests, lint, and the Angular build pass. The "Later, when a test needs it" item is deferred to Sprint 2.
 
 **Done**
 
@@ -48,7 +48,7 @@ while (!isTerminal(state)) {
 
 - [x] Remove `reply` from `FinishDecision`; the reply is built by code from verified places. (Required before Sprint 1.)
 - [x] Angular project (standalone, SCSS) builds.
-- [ ] Later, when a test needs it: remove `trace` from state (Sprint 2), DI tokens for ports (Sprint 2), `previousSlots` on the session (Sprint 3).
+- [ ] Later, when a test needs it: remove `trace` from state (Sprint 2), DI tokens for ports (Sprint 2). `previousSlots` on the session/state (Sprint 3, with clarification-resume).
 - [x] Cleanup: README boilerplate, `deploy` script, `@nestjs/mau`, committed `tsbuildinfo`.
 
 **Exit:** a type test (`// @ts-expect-error`) proves the model cannot express `CALL_TOOL filter_and_verify` or a `FINISH` with restaurant text, and all backend checks plus the frontend build pass.
@@ -73,21 +73,25 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 
 **What this changes in our contracts**
 
-- [ ] `GoogleNearbySearchInput`: replace `keyword` with `includedTypes: readonly PlaceType[]` (a typed union of the cuisine types you support). Remove `openNow`; the verifier checks it.
-- [ ] Tool choice becomes clear: cuisine maps to a Google type → nearby; a dish or free text ("carbonara", "smash burger") → text search.
-- [ ] `GoogleTextSearchInput`: `textQuery`, `locationBias` circle (anchor + radius), optional `includedType`, `openNow`. A circle can only bias, not restrict, so results outside the radius are expected and the verifier removes them.
-- [ ] Field mask: rating and opening hours sit in the most expensive Text Search SKU tier. Request them only because the verifier needs opening state; leave rating out unless the UI shows it.
+- [x] `PlaceType` is exactly five values: `italian_restaurant`, `hamburger_restaurant`, `pizza_restaurant`, `sushi_restaurant`, `restaurant`. `Circle` is `{ center: Coordinates, radiusMeters }`.
+- [x] `GoogleNearbySearchInput`: `includedTypes` is a non-empty tuple `readonly [PlaceType, ...PlaceType[]]` and `locationRestriction: Circle`. `keyword` and `openNow` are removed; the verifier checks open state.
+- [x] Tool choice becomes clear: cuisine maps to a Google type → nearby; a dish or free text ("carbonara", "smash burger") → text search.
+- [x] `GoogleTextSearchInput`: `query` renamed `textQuery`; required `locationBias: Circle`; optional `includedType` and `openNow` use absence, not `null`. A circle can only bias, not restrict, so results outside the radius are expected and the verifier removes them.
+- [x] Radius widening ("never widen an explicit radius") is NOT typed in tool inputs; it is deterministic behavior tested in Sprint 7.
+- [x] `RawPlace.rating` stays nullable. Rating and opening hours sit in the most expensive Text Search SKU tier; the real field-mask and rating decision is deferred to Sprint 9.
 
 ### Slot contract (locked)
 
 **Decision:** slot extraction is a separate first step, not part of each loop decision.
 
-- `extractSlots(message, gps, previousSlots) → Slots` runs once per turn, before the loop. A `SlotExtractor` port: fake now, LLM structured output in Sprint 10.
+- `extractSlots(message: string, gps: Coordinates | null, previousSlots: Slots | null): Promise<Slots>` runs once per turn, before the loop. A `SlotExtractor` port (not a tool): fake now, LLM structured output in Sprint 10. `AgentSession` is unchanged in Sprint 0.5; `previousSlots` is added to session/state in Sprint 3 with the clarification-resume behavior. The DI token comes in Sprint 2.
 - Inside the loop, slots change only through code: geocode result → `anchor`; retry → `radiusMeters` (only when `radiusSource` is `default`).
 - The LLM decision never edits slots. It chooses actions; it doesn't rewrite what the user asked.
 - Turn 2 of a clarification merges new slots over `previousSlots`.
 
 **Exit:** updated contract files compile, plus one type test per change above.
+
+**Status: Done.** Type specs for nearby, text, `ToolCall` and `SlotExtractor`; backend typecheck, build, tests and lint pass.
 
 ## Sprints 1–3 — Control, loop, clarification (fakes only)
 
@@ -131,6 +135,7 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 **Exit:**
 
 - Turn 1: status `need_input`, exactly one question, zero tool calls, a `clarification` trace event.
+- `previousSlots` is added to session/state here (not in Sprint 0.5) so clarification-resume can restore it.
 - Turn 2 ("Tel Aviv"): `previousSlots` keeps `burger`, and the agent proceeds to geocode.
 - A second clarification in the same turn is rejected (`maxClarificationsPerTurn = 1`).
 
@@ -256,3 +261,7 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 **Exit:** an eval set of 15–20 requests you run by hand, with a score you record and compare before every prompt or model change.
 
 Only after this: memory, RAG, or multi-agent, and only for a concrete need.
+
+## Discovered cases (backlog)
+
+- Out-of-scope request ('what time is it?') -> no tools, stop. Needs intent in Slots + finish reason decision. Target: Sprint 3.

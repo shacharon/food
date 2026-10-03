@@ -12,6 +12,37 @@ describe('ToolCall', () => {
   });
 });
 
+describe('ToolCall search shapes', () => {
+  const circle = { center: { lat: 32.08, lng: 34.78 }, radiusMeters: 1500 } as const;
+
+  it('accepts the new nearby and text shapes', () => {
+    const nearby: ToolCall = {
+      tool: 'google_nearby_search',
+      input: { includedTypes: ['sushi_restaurant'], locationRestriction: circle },
+    };
+    const text: ToolCall = {
+      tool: 'google_text_search',
+      input: { textQuery: 'carbonara', locationBias: circle },
+    };
+
+    expect([nearby.tool, text.tool]).toEqual(['google_nearby_search', 'google_text_search']);
+  });
+
+  it('rejects the old keyword nearby shape', () => {
+    const oldShape: ToolCall = {
+      tool: 'google_nearby_search',
+      input: {
+        includedTypes: ['sushi_restaurant'],
+        locationRestriction: circle,
+        // @ts-expect-error keyword is an excess property; nearby search has no keyword.
+        keyword: 'sushi',
+      },
+    };
+
+    expect(oldShape.tool).toBe('google_nearby_search');
+  });
+});
+
 describe('FinishDecision', () => {
   it('is a bare FINISH decision with no free-form text', () => {
     const decision: FinishDecision = { type: 'FINISH' };

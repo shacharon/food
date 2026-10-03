@@ -1,12 +1,15 @@
-import type { Coordinates } from '../coordinates.js';
+import type { Circle } from '../circle.js';
+import type { PlaceType } from '../place-type.js';
 import type { RawPlace } from './raw-place.js';
 import type { Tool } from './tool.js';
 
+/** Optional fields use absence, not null (outbound request convention). */
 export interface GoogleTextSearchInput {
-  readonly query: string;
-  readonly anchor: Coordinates;
-  readonly radiusMeters: number;
-  readonly openNow: boolean | null;
+  readonly textQuery: string;
+  /** Biases only; results outside the circle are expected. */
+  readonly locationBias: Circle;
+  readonly includedType?: PlaceType;
+  readonly openNow?: boolean;
 }
 
 export interface GoogleTextSearchOutput {
