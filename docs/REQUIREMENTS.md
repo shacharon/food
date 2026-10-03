@@ -94,6 +94,11 @@ Define and maintain strongly typed contracts for:
 - `TraceRecorder`
 - `GooglePlacesClient`
 - `LlmClient`
+- `SlotExtractor`: `extractSlots(message: string, gps: Coordinates | null, previousSlots: Slots | null): Promise<Slots>`
+- `PlaceType`: `'italian_restaurant' | 'hamburger_restaurant' | 'pizza_restaurant' | 'sushi_restaurant' | 'restaurant'`
+- `AgentSession` gains `previousSlots` in Sprint 3 (clarification-resume), not before.
+
+Convention: slots and response data use `null` for unknown; outbound request fields (tool inputs) use absence for unset optionals (`exactOptionalPropertyTypes`).
 
 ## Locked Limits
 

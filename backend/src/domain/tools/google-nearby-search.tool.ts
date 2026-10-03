@@ -1,13 +1,11 @@
-import type { Coordinates } from '../coordinates.js';
+import type { Circle } from '../circle.js';
+import type { PlaceType } from '../place-type.js';
 import type { RawPlace } from './raw-place.js';
 import type { Tool } from './tool.js';
 
 export interface GoogleNearbySearchInput {
-  readonly anchor: Coordinates;
-  readonly radiusMeters: number;
-  /** Optional keyword, e.g. cuisine or dish. */
-  readonly keyword: string | null;
-  readonly openNow: boolean | null;
+  readonly includedTypes: readonly [PlaceType, ...PlaceType[]];
+  readonly locationRestriction: Circle;
 }
 
 export interface GoogleNearbySearchOutput {
