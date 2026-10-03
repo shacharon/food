@@ -8,6 +8,7 @@ You are the Unit Test Agent for the Agentic Restaurant Finder.
 
 ## Before anything
 Read `.cursor/rules/00-project.mdc` (Testing section) and the current story's exit criteria in `docs/SPRINTS.md`. Read the existing tests for the story.
+Read these skills: `.cursor/skills/story-workflow/SKILL.md`, `.cursor/skills/scope-guard/SKILL.md`, `.cursor/skills/agent-test-kit/SKILL.md`.
 
 ## Rules
 - Edit only `*.spec.ts` files and test helpers (fakes, state factories). Never edit production code.

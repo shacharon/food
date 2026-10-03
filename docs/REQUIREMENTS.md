@@ -52,9 +52,11 @@ The model must never invent restaurant names, locations, opening hours, distance
    - distance
    - opening state
    - cuisine/dish fit
-8. Allow one retry only on soft failure:
-   - geocode failure
-   - or zero results when the radius was system-defaulted
+8. Retry and recovery (the error code is the single source of truth; there is no `soft` flag):
+   - `provider_unavailable` (geocode or search): retry the same call once, then finish `failed`
+   - `geocode_not_found` or `geocode_ambiguous`: not retried; ask a clarification if one is available, otherwise finish `failed`
+   - zero results at the default radius: one mandatory widened retry (see Locked Limits and Radius rules)
+   - a missing location is not a geocode failure; geocode is never called
 9. Never widen a radius explicitly supplied by the user.
 10. Finish with verified places only.
 
@@ -105,7 +107,16 @@ Convention: slots and response data use `null` for unknown; outbound request fie
 - `maxSteps = 6`
 - `maxSearchAttempts = 2`
 - `maxClarificationsPerTurn = 1`
-- `defaultRadiusMeters = 1500`
+- `defaultRadiusMeters = 300`
+- `widenedRadiusMeters = 800`
+
+### Radius rules (locked)
+
+- Widening happens at most once, only when `radiusSource === 'default'`, from 300 m to 800 m.
+- An explicit radius is never widened.
+- Constants exist in `AGENT_LIMITS`; the widening behavior is implemented in Sprint 7.
+- Search center and radius are built by code from state/slots. The model chooses only the search capability (nearby vs text) and its search intent fields (`includedTypes` for nearby, `textQuery` for text). The model does not supply center or radius. The `ToolCall` contract changes in Sprint 2.
+- `AgentDecision` cannot express a restaurant name; only `VerifiedPlace` reaches the response.
 
 `RadiusSource` must be exactly:
 
@@ -354,7 +365,7 @@ The UI renders restaurant information only from the structured `places` response
 
 Test at minimum:
 
-- `"italian restaurant within 300 meters of the Champs-Élysées in Paris"`
+- `"italian restaurant within 300 meters of the Champs-Élysées in Paris"` (an explicit 300 m radius, not the default)
 - `"open hamburger near me"` with GPS
 - `"I want a burger"` without location
 - default-radius soft failure and one retry

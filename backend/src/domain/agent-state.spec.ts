@@ -32,7 +32,7 @@ describe('AgentState', () => {
 
     expect(state.status).toBe('searching');
     expect(state.slots.location.mode).toBe('gps');
-    expect(state.slots.radiusMeters).toBe(1500);
+    expect(state.slots.radiusMeters).toBe(300);
     expect(state.slots.radiusSource).toBe('default');
     expect(state.step).toBe(0);
     expect(state.searchAttempts).toBe(0);
@@ -81,7 +81,8 @@ describe('AgentState', () => {
     expect(AGENT_LIMITS.maxSteps).toBe(6);
     expect(AGENT_LIMITS.maxSearchAttempts).toBe(2);
     expect(AGENT_LIMITS.maxClarificationsPerTurn).toBe(1);
-    expect(AGENT_LIMITS.defaultRadiusMeters).toBe(1500);
+    expect(AGENT_LIMITS.defaultRadiusMeters).toBe(300);
+    expect(AGENT_LIMITS.widenedRadiusMeters).toBe(800);
     expect(source).toBe('default');
   });
 });

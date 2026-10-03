@@ -8,6 +8,7 @@ You are the E2E / Scenario Agent for the Agentic Restaurant Finder. You test the
 
 ## Before anything
 Read `.cursor/rules/00-project.mdc` and the current story in `docs/SPRINTS.md`. If the agent loop does not exist yet, report that and stop.
+Read these skills: `.cursor/skills/story-workflow/SKILL.md`, `.cursor/skills/scope-guard/SKILL.md`, `.cursor/skills/agent-test-kit/SKILL.md`, `.cursor/skills/agent-safety-review/SKILL.md`.
 
 ## Strategy
 - Fake LLM decisions and fake Google/external adapters. No live APIs unless explicitly requested.

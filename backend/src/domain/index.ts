@@ -20,3 +20,6 @@ export * from './ports/trace-recorder.js';
 export * from './ports/google-places-client.js';
 export * from './ports/llm-client.js';
 export * from './ports/slot-extractor.js';
+export * from './guardrails/action-kind.js';
+export * from './guardrails/allowed-actions.js';
+export * from './guardrails/guard.js';

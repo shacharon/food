@@ -29,7 +29,7 @@ If anything conflicts with these, the documents win; flag the conflict instead o
 - Only `VerifiedPlace` may appear in `AgentResponse.places`. The reply text is built by code from verified places.
 - The UI renders restaurant data from `places`, never from free-form LLM text.
 - Guardrails, limits, verification, authorization, and mandatory state transitions are deterministic application code.
-- Locked limits come from `AGENT_LIMITS` (maxSteps 6, maxSearchAttempts 2, maxClarificationsPerTurn 1, defaultRadiusMeters 1500). Never widen a radius whose `radiusSource` is `explicit`.
+- Locked limits come from `AGENT_LIMITS` (maxSteps 6, maxSearchAttempts 2, maxClarificationsPerTurn 1, defaultRadiusMeters 300, widenedRadiusMeters 800). Widen at most once, only when `radiusSource` is `default`; never widen a radius whose `radiusSource` is `explicit` (see `docs/REQUIREMENTS.md`).
 - Tests never call live Google or LLM APIs.
 
 ## Learning rule

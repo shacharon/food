@@ -103,13 +103,41 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 
 **Learn:** state-driven control; deterministic guardrails; agent freedom vs business rules.
 
+**Status: Done.** `allowedActions` and `guard` implemented; table-driven tests, the `AgentDecision` type test, and backend typecheck, build, tests and lint pass. The "verified places exist → `FINISH` only" rule stays an `it.todo`, deferred to Sprint 2.
+
 **Exit (table-driven tests):**
 
-- GPS present → `geocode_location` not allowed; both searches allowed.
-- Anchor null → no search allowed.
-- Location missing → only `ASK_CLARIFICATION` allowed.
-- A decision outside the list is rejected by `guard`, with a reason.
-- A decision that names a restaurant not in any search result is rejected.
+- [x] GPS present → `geocode_location` not allowed; both searches allowed.
+- [x] Anchor null → no search allowed.
+- [x] Location missing, clarification unused → only `ASK_CLARIFICATION` allowed (rule 3 below).
+- [x] A decision outside the list is rejected by `guard`, with a reason.
+- [x] `AgentDecision` cannot express a restaurant name, proven by a type test. Runtime enforcement is implemented in Sprint 2.
+
+**Locked rule decisions (Sprint 1):**
+
+- A non-terminal state never returns zero allowed actions.
+- Location missing and clarification already used → `FINISH` only.
+- GPS present but no anchor (inconsistent state) → `FINISH` only.
+- Attempts exhausted → `FINISH` only (rule 7).
+- Some searches done but not exhausted → search or `FINISH` (rule 9). Sprint 1 cannot distinguish "search ran with zero verified results" from "search had verified results"; this is accepted for Sprint 1 and the state signal is deferred to Sprint 2. Sprint 7 tightens the rule.
+- "Verified places exist → `FINISH` only" moves to Sprint 2 (`SearchingState` has no verified-results signal); it stays an `it.todo` in Sprint 1.
+- Terminal states are `done`, `failed` and `need_input` (`need_input` is terminal for the current turn). Only `searching` is non-terminal. Every non-terminal state returns at least one allowed action; terminal states may return an empty list.
+- `allowedActions` returns only `ActionKind[]`; it does not build tool arguments and does not change state.
+- Search center and radius are built by code, not by the model; see the Sprint 2 `ToolCall` contract decision.
+
+**Rule table (Sprint 1) — first match wins; the returned order is canonical and tested with `toEqual`:**
+
+| # | Condition | Returned actions (in order) |
+|---|-----------|-----------------------------|
+| 1 | `status != searching` | `[]` (terminal state) |
+| 2 | `step >= maxSteps` | `FINISH` |
+| 3 | location missing, clarification unused | `ASK_CLARIFICATION` |
+| 4 | location missing, clarification used | `FINISH` |
+| 5 | GPS without anchor | `FINISH` |
+| 6 | `place_name` / `address` without anchor | `geocode_location` |
+| 7 | anchor exists, search attempts exhausted | `FINISH` |
+| 8 | anchor exists, no search yet | `google_nearby_search`, `google_text_search` |
+| 9 | anchor exists, some searches done but not exhausted | `google_nearby_search`, `google_text_search`, `FINISH` |
 
 ### Sprint 2 — First manual loop
 
@@ -123,6 +151,12 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 - [ ] Minimal `ResultVerifier`: distance only (Haversine). `verify` always runs after a search.
 - [ ] Trace events: decision, tool call, tool result, verification, state transition, finish.
 - [ ] `finish` builds the reply from verified places only.
+
+**Locked decisions (Sprint 2):**
+
+- `ToolCall` contract change: search center and radius are built by code from state/slots. The model chooses only the search capability (nearby vs text) and its intent fields (`includedTypes` for nearby, `textQuery` for text). The model does not supply center or radius.
+- `max_steps` → `status: failed`, `finishReason: max_steps`. Remove `max_steps` from `DoneState` in this sprint.
+- Runtime enforcement that a decision cannot name a restaurant (type-level proof is Sprint 1).
 
 **Exit:** GPS → nearby → verified test passes; a place outside the radius never reaches the response; a looping script stops at 6 steps with `max_steps`; a malformed decision ends `failed` with a `failure` event.
 
@@ -148,6 +182,13 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 **Flow:** place name → geocode → search → verify → finish.
 
 **Learn:** tool dependency; observations feeding later decisions.
+
+**Locked decisions (Sprint 4):**
+
+- `geocode_not_found` → `ASK_CLARIFICATION` if available, otherwise `FINISH` failed. `geocode_ambiguous` → same.
+- `provider_unavailable` → retry the same call once, then `FINISH` failed.
+- A missing location is not a geocode failure; geocode is never called.
+- Remove `AgentError.soft`; retry/clarification policy derives from the error code as the single source of truth.
 
 **Exit:** trace shows geocode → search → verify in that order; the geocoded point becomes `anchor`; search is not allowed before it exists. A partial or ambiguous geocode match leads to a clarification instead of a search.
 
@@ -175,8 +216,9 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 
 **Exit:**
 
-- Default radius, zero results → one retry, wider radius → `radius_widened`.
-- Explicit 300 m, zero results → no retry → `no_results_explicit_radius`, even if the scripted LLM asks to widen.
+- Radius rules: `defaultRadiusMeters = 300`, `widenedRadiusMeters = 800` (constants exist since Sprint 1 step b); widening at most once, only when `radiusSource === 'default'`; this sprint implements the behavior.
+- Default radius (300 m), zero results → one retry at 800 m → `radius_widened`.
+- Explicit 500 m, zero results → no retry → `no_results_explicit_radius`, even if the scripted LLM asks to widen.
 - Geocode fails once → one retry → success.
 - `searchAttempts` never exceeds 2; every retry has a `retry` trace event.
 
@@ -188,7 +230,7 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 
 **Learn:** regression testing; tests as the contract that later refactors must keep.
 
-**Exit:** one green test each for Champs-Élysées 300 m, open hamburger with GPS, burger without location, default-radius retry, explicit radius with no widening, geocode failure, hallucinated restaurant, max steps, Google failure, malformed LLM decision.
+**Exit:** one green test each for Champs-Élysées with an explicit 300 m radius, open hamburger with GPS, burger without location, default-radius retry, explicit radius with no widening, geocode failure, hallucinated restaurant, max steps, Google failure, malformed LLM decision.
 
 ### Sprint 9 — Real Google
 
@@ -265,3 +307,5 @@ Only after this: memory, RAG, or multi-agent, and only for a concrete need.
 ## Discovered cases (backlog)
 
 - Out-of-scope request ('what time is it?') -> no tools, stop. Needs intent in Slots + finish reason decision. Target: Sprint 3.
+- Optional: replace toHaveLength/toBeDefined bookkeeping in type specs with Vitest assertType/expectTypeOf.
+- allowedActions rules 5-6 and actionKindOf: add never checks so a new location mode or decision type fails compilation. Add a guard test: search rejected when anchor is null.

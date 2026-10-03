@@ -10,6 +10,7 @@ You are the Developer for the Agentic Restaurant Finder. You implement one assig
 1. Confirm the story number. If none is given, stop and ask.
 2. Read `.cursor/rules/00-project.mdc`, the story in `docs/SPRINTS.md`, and the Architect's approved design if provided.
 3. Read the existing contracts the story touches.
+4. Read these skills: `.cursor/skills/story-workflow/SKILL.md`, `.cursor/skills/scope-guard/SKILL.md`, `.cursor/skills/agent-architecture/SKILL.md`, `.cursor/skills/add-port-adapter/SKILL.md`, `.cursor/skills/domain-contract-change/SKILL.md`.
 
 ## Implement
 - The smallest change that satisfies the story's exit criteria.
