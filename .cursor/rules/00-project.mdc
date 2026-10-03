@@ -1,0 +1,110 @@
+---
+description: Agentic Restaurant Finder - shared architecture, agent invariants, learning rule and coding standards. Applies to every interaction and every project agent.
+alwaysApply: true
+---
+
+# Agentic Restaurant Finder - project rules
+
+Standalone project in `C:\dev\piza\food`. Backend: NestJS + TypeScript. Frontend: Angular + TypeScript + SCSS.
+
+## Sources of truth
+- `docs/SPRINTS.md`: the sprint plan. The current story's goal and exit criteria define scope.
+- `docs/REQUIREMENTS.md`: the locked requirements.
+- This file: architecture invariants and coding standards.
+If anything conflicts with these, the documents win; flag the conflict instead of choosing silently.
+
+## Workflow
+- One story at a time. Agents run in order, one at a time, never in parallel on the same change:
+  `/architect` -> `/developer` -> `/unit-test` -> `/code-reviewer` -> `/e2e-scenario` (from Sprint 2).
+- Do not expand beyond the current story without explicit approval. Do not redesign architecture outside it.
+- Do not inspect, copy, import from, or reference sibling or older projects.
+- Do not add dependencies unless explicitly requested.
+
+## Agent architecture invariants
+- Only three agent-selectable tools exist: `geocode_location`, `google_text_search`, `google_nearby_search`.
+- Clarification is an `AgentDecision`, not a tool.
+- `ResultVerifier` is synchronous deterministic application code, never an agent-selectable tool. It runs after every search.
+- Tools never call the LLM. The agent never calls Google directly; Google access goes only through `GooglePlacesClient`.
+- Tools return `ToolResult`; thrown exceptions are not used as normal tool-flow control.
+- Only `VerifiedPlace` may appear in `AgentResponse.places`. The reply text is built by code from verified places.
+- The UI renders restaurant data from `places`, never from free-form LLM text.
+- Guardrails, limits, verification, authorization, and mandatory state transitions are deterministic application code.
+- Locked limits come from `AGENT_LIMITS` (maxSteps 6, maxSearchAttempts 2, maxClarificationsPerTurn 1, defaultRadiusMeters 1500). Never widen a radius whose `radiusSource` is `explicit`.
+- Tests never call live Google or LLM APIs.
+
+## Learning rule
+Do not implement the following unless the user explicitly assigns the corresponding story:
+`allowedActions`, the decision guard, the agent loop, retry policy, `ResultVerifier` business rules, state-transition logic.
+For those areas, unless assigned: explain, scaffold types/interfaces, suggest tests, review user-written code, point out architectural issues.
+Never silently complete future stories.
+
+## TypeScript
+- Strict mode is mandatory. No `any`; use `unknown` and narrow. No non-null assertions (`!`) without a comment explaining why.
+- Prefer readonly domain types and `readonly T[]`. Update immutably; never mutate domain data.
+- Prefer discriminated unions for state, decision and result models. Handle them with an exhaustive `switch` and a `never` check.
+- Prefer literal unions over enums.
+- ESM with `nodenext`: relative imports end in `.js`.
+- No magic numbers for agent limits: use `AGENT_LIMITS`.
+
+## OOP / SOLID
+- Classes where there is clear ownership and injected dependencies: services, tools, adapters, the agent, the trace recorder.
+- Plain types and pure functions for domain data and policy: state, slots, `allowedActions`, guard rules, verification rules.
+- Prefer composition over inheritance. Inheritance only to implement an interface.
+- Small classes/services with one clear responsibility. No god services.
+- Depend on abstractions (ports) at external boundaries, not concrete SDK clients.
+- Small, focused ports; no "god" interfaces. Every fake and real adapter is fully substitutable for its port.
+- No circular dependencies, hidden side effects, or unnecessary global state.
+- Introduce a design pattern only when it solves a concrete problem in the current story. No speculative abstractions.
+- Keep public contracts minimal and stable.
+
+## NestJS
+- Feature modules with clear ownership (e.g. AgentModule, PlacesModule, LlmModule). Keep modules acyclic; avoid `forwardRef` unless explicitly justified.
+- Controllers are thin: HTTP concerns only. Business/application logic lives in services, use-cases, or domain components.
+- External integrations live behind ports/adapters.
+- Constructor injection, dependencies `private readonly`. Never instantiate injected dependencies with `new` inside services.
+- Interface-based ports use explicit DI tokens: `export const LLM_CLIENT = Symbol('LlmClient')`, `@Inject(LLM_CLIENT)`, bound with `{ provide, useClass | useFactory }`. Swap fakes in tests with `overrideProvider`.
+- Prefer explicit provider wiring over global modules.
+- Validate external input at the HTTP boundary with DTOs/pipes (validation library chosen in the API sprint).
+- Do not leak provider-specific DTOs or SDK types into the domain. Convert provider errors into application/domain error types at the adapter boundary.
+- Configuration and secrets come from configuration providers/environment variables. Never hard-code secrets; API keys never leave the server.
+- Use Nest's `Logger`, not `console.log`. No floating promises.
+- Pure functions (policy, verifier) are tested without Nest; use `Test.createTestingModule` for wiring and e2e.
+
+## Angular
+- Angular v20+: components are standalone by default. Do not write `standalone: true`. Do not introduce NgModules unless explicitly required.
+- `ChangeDetectionStrategy.OnPush` on every component.
+- Signals for local/component state (`signal`, `computed`; `set`/`update`, never `mutate`). RxJS for asynchronous streams and event composition.
+- Inputs/outputs with `input()`, `input.required()`, `output()`. Dependencies with `inject()`.
+- Built-in control flow: `@if`, `@for` (always with `track`), `@switch`. No `*ngIf` / `*ngFor`.
+- Avoid unnecessary manual subscriptions; when required, ensure lifecycle-safe cleanup (e.g. `takeUntilDestroyed`).
+- Components focus on presentation/orchestration. Reusable or business logic goes in services or pure functions.
+- Backend access lives in dedicated typed services using shared API models. Components never call `HttpClient` directly for application flows.
+- Typed reactive forms when forms are needed.
+- Templates stay declarative; no complex business logic in templates.
+- Semantic HTML and basic accessibility (buttons for actions, labels for inputs, alt text).
+- SCSS is component-scoped; avoid global/deep selectors unless explicitly justified.
+- Lazy-load routes with `loadComponent`. No state-management library unless complexity justifies it.
+
+## Code quality
+- Explicit names over abbreviations (`isOverStepLimit`, not `chk`). Files kebab-case, one main concept per file.
+- Small functions with one job; early returns over deep nesting.
+- Each invariant has one source of truth; no duplicated business rules.
+- Do not swallow errors.
+- No dead code, no commented-out implementations, no TODO without a story number.
+- Comments explain why, not what.
+
+## Testing
+- New behavior requires focused tests appropriate to its layer.
+- Test behavior and contracts, not private implementation details.
+- Deterministic: fakes over deep mocks, injected clock, fixed data, no real network, no randomness.
+- Table-driven tests (`it.each`) for rule tables; readable state factories (`gpsState()`, `missingState()`).
+- Test files sit next to the code (`allowed-actions.spec.ts` beside `allowed-actions.ts`).
+
+## Required validation
+Every implementation change must keep these green (run from the backend folder):
+```powershell
+npm run typecheck
+npm run build
+npm test
+npm run lint
+```
