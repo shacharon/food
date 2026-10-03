@@ -61,3 +61,23 @@ describe('FinishDecision', () => {
     expect(decisionWithReply.type).toBe('FINISH');
   });
 });
+
+describe('AgentDecision cannot express a restaurant name', () => {
+  it('rejects name-like fields on every decision variant', () => {
+    // @ts-expect-error FINISH has no name field.
+    const finishName: AgentDecision = { type: 'FINISH', name: "Luigi's" };
+    // @ts-expect-error FINISH has no places field.
+    const finishPlaces: AgentDecision = { type: 'FINISH', places: [] };
+    // @ts-expect-error ASK_CLARIFICATION has no restaurantName field.
+    const askName: AgentDecision = { type: 'ASK_CLARIFICATION', question: 'Where?', restaurantName: "Luigi's" };
+    const callName: AgentDecision = {
+      type: 'CALL_TOOL',
+      call: { tool: 'google_text_search', input: { textQuery: 'pizza', locationBias: { center: { lat: 32.08, lng: 34.78 }, radiusMeters: 300 } } },
+      // @ts-expect-error CALL_TOOL has no restaurantName field.
+      restaurantName: "Luigi's",
+    };
+
+    expect([finishName.type, finishPlaces.type, askName.type, callName.type]).toHaveLength(4);
+  });
+});
+

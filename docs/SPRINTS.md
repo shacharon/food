@@ -107,7 +107,7 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 
 - GPS present → `geocode_location` not allowed; both searches allowed.
 - Anchor null → no search allowed.
-- Location missing → only `ASK_CLARIFICATION` allowed.
+- Location missing, clarification unused → only `ASK_CLARIFICATION` allowed (rule 3 below).
 - A decision outside the list is rejected by `guard`, with a reason.
 - `AgentDecision` cannot express a restaurant name, proven by a type test. Runtime enforcement is implemented in Sprint 2.
 
@@ -116,9 +116,26 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 - A non-terminal state never returns zero allowed actions.
 - Location missing and clarification already used → `FINISH` only.
 - GPS present but no anchor (inconsistent state) → `FINISH` only.
-- Attempts exhausted → `FINISH` only. Verified places exist → `FINISH` only. Search ran with no verified results → search or `FINISH` for now; Sprint 7 tightens this rule.
+- Attempts exhausted → `FINISH` only (rule 7).
+- Some searches done but not exhausted → search or `FINISH` (rule 9). Sprint 1 cannot distinguish "search ran with zero verified results" from "search had verified results"; this is accepted for Sprint 1 and the state signal is deferred to Sprint 2. Sprint 7 tightens the rule.
+- "Verified places exist → `FINISH` only" moves to Sprint 2 (`SearchingState` has no verified-results signal); it stays an `it.todo` in Sprint 1.
+- Terminal states are `done`, `failed` and `need_input` (`need_input` is terminal for the current turn). Only `searching` is non-terminal. Every non-terminal state returns at least one allowed action; terminal states may return an empty list.
 - `allowedActions` returns only `ActionKind[]`; it does not build tool arguments and does not change state.
 - Search center and radius are built by code, not by the model; see the Sprint 2 `ToolCall` contract decision.
+
+**Rule table (Sprint 1) — first match wins; the returned order is canonical and tested with `toEqual`:**
+
+| # | Condition | Returned actions (in order) |
+|---|-----------|-----------------------------|
+| 1 | `status != searching` | `[]` (terminal state) |
+| 2 | `step >= maxSteps` | `FINISH` |
+| 3 | location missing, clarification unused | `ASK_CLARIFICATION` |
+| 4 | location missing, clarification used | `FINISH` |
+| 5 | GPS without anchor | `FINISH` |
+| 6 | `place_name` / `address` without anchor | `geocode_location` |
+| 7 | anchor exists, search attempts exhausted | `FINISH` |
+| 8 | anchor exists, no search yet | `google_nearby_search`, `google_text_search` |
+| 9 | anchor exists, some searches done but not exhausted | `google_nearby_search`, `google_text_search`, `FINISH` |
 
 ### Sprint 2 — First manual loop
 
