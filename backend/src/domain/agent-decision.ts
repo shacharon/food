@@ -1,6 +1,7 @@
 import type { GeocodeLocationInput } from './tools/geocode-location.tool.js';
 import type { GoogleNearbySearchInput } from './tools/google-nearby-search.tool.js';
 import type { GoogleTextSearchInput } from './tools/google-text-search.tool.js';
+
 /** Clarification is a decision, not a tool. */
 export interface AskClarificationDecision {
   readonly type: 'ASK_CLARIFICATION';
@@ -19,7 +20,6 @@ export interface CallToolDecision {
 
 export interface FinishDecision {
   readonly type: 'FINISH';
-  readonly reply: string;
 }
 
 export type AgentDecision =
