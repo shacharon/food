@@ -265,3 +265,4 @@ Only after this: memory, RAG, or multi-agent, and only for a concrete need.
 ## Discovered cases (backlog)
 
 - Out-of-scope request ('what time is it?') -> no tools, stop. Needs intent in Slots + finish reason decision. Target: Sprint 3.
+- Optional: replace toHaveLength/toBeDefined bookkeeping in type specs with Vitest assertType/expectTypeOf.
