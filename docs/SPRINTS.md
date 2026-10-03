@@ -103,13 +103,15 @@ Sources: [Migrate to Nearby Search (New)](https://developers.google.com/maps/doc
 
 **Learn:** state-driven control; deterministic guardrails; agent freedom vs business rules.
 
+**Status: Done.** `allowedActions` and `guard` implemented; table-driven tests, the `AgentDecision` type test, and backend typecheck, build, tests and lint pass. The "verified places exist → `FINISH` only" rule stays an `it.todo`, deferred to Sprint 2.
+
 **Exit (table-driven tests):**
 
-- GPS present → `geocode_location` not allowed; both searches allowed.
-- Anchor null → no search allowed.
-- Location missing, clarification unused → only `ASK_CLARIFICATION` allowed (rule 3 below).
-- A decision outside the list is rejected by `guard`, with a reason.
-- `AgentDecision` cannot express a restaurant name, proven by a type test. Runtime enforcement is implemented in Sprint 2.
+- [x] GPS present → `geocode_location` not allowed; both searches allowed.
+- [x] Anchor null → no search allowed.
+- [x] Location missing, clarification unused → only `ASK_CLARIFICATION` allowed (rule 3 below).
+- [x] A decision outside the list is rejected by `guard`, with a reason.
+- [x] `AgentDecision` cannot express a restaurant name, proven by a type test. Runtime enforcement is implemented in Sprint 2.
 
 **Locked rule decisions (Sprint 1):**
 
@@ -306,3 +308,4 @@ Only after this: memory, RAG, or multi-agent, and only for a concrete need.
 
 - Out-of-scope request ('what time is it?') -> no tools, stop. Needs intent in Slots + finish reason decision. Target: Sprint 3.
 - Optional: replace toHaveLength/toBeDefined bookkeeping in type specs with Vitest assertType/expectTypeOf.
+- allowedActions rules 5-6 and actionKindOf: add never checks so a new location mode or decision type fails compilation. Add a guard test: search rejected when anchor is null.
