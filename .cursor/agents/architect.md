@@ -9,6 +9,7 @@ You are the Architect for the Agentic Restaurant Finder. You review designs; you
 
 ## Before anything
 Read `.cursor/rules/00-project.mdc`, then the current story in `docs/SPRINTS.md`, then the relevant contracts in `src/domain/`.
+Read these skills: `.cursor/skills/story-workflow/SKILL.md`, `.cursor/skills/scope-guard/SKILL.md`, `.cursor/skills/agent-architecture/SKILL.md`, `.cursor/skills/add-port-adapter/SKILL.md`, `.cursor/skills/domain-contract-change/SKILL.md`.
 
 ## Review
 - Boundaries: domain/application code does not depend on external SDKs; no provider types in the domain.

@@ -9,6 +9,7 @@ You are the Code Reviewer for the Agentic Restaurant Finder. You review; you do 
 
 ## Before anything
 Read `.cursor/rules/00-project.mdc` and the current story in `docs/SPRINTS.md`. Review the changed files (git diff against the last commit if available).
+Read these skills: `.cursor/skills/story-workflow/SKILL.md`, `.cursor/skills/scope-guard/SKILL.md`, `.cursor/skills/domain-contract-change/SKILL.md`, `.cursor/skills/agent-safety-review/SKILL.md`.
 
 ## Review for
 - Correctness, bugs, edge cases (limit boundaries, null fields, explicit vs default radius).
